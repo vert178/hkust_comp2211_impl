@@ -59,6 +59,7 @@ class k_Naive_Bayes():
         self.__data[:, -1] = result_arr
         self.__lookup_list = lookup_list
 
+    # Evidence is nparray of "conditions" of the "symptoms"
     def predict(self, evidence, alpha=1):
         assert alpha > 0
         result = []
@@ -80,13 +81,15 @@ class k_Naive_Bayes():
             filtered_count = count[evid_arr]
             P += np.sum(np.log(filtered_count / filtered_results.shape[0]))
 
-            result += (k, P)
+            result += P
             if P > prediction[1]:
                 prediction = (k, P)
 
+        # Result: list containing results
+        # prediction: tuple with [0] being the indication that i-th result is best, and [1] being the log of the probability
         return result, prediction
 
-    # Generates data for results
+    # Generates data for results. Last column being the results, other columns being the condition of the i-th symptom
     # ratio_dict: 2D array of tuples. First dimension: result_i, second dimension: evidence_i
 
     @staticmethod
