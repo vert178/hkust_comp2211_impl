@@ -1,36 +1,7 @@
 import numpy as np
-import random
 
 # Written with minimum dependencies in mind. Not really optimized in terms of memory or runtime
 # Discrete values only for now
-
-
-def list_find(lis, data):
-    try:
-        return lis.index(data)
-    except ValueError as err:
-        return -1
-
-
-__EPSILON = 1e-5
-
-
-def gen_data(t: tuple):
-    rand = random.random()
-    cumulative = 0
-    c2 = 0
-    result = 0
-    for i in range(len(t)):
-        assert type(t[i]) == float or type(t[i]) == int
-        cumulative += t[i]
-        if i > 0:
-            c2 += t[i - 1]
-
-        if rand >= c2 and rand < cumulative:
-            result = i
-
-    assert abs(cumulative - 1) < __EPSILON
-    return result
 
 
 class k_Naive_Bayes():
@@ -55,7 +26,7 @@ class k_Naive_Bayes():
         for i in range(len(lookup_list)):
             pair = lookup_list[i]
             self.__data[:, i] = evidence_arr[:, pair[0]] == pair[1]
-        
+
         self.__data[:, -1] = result_arr
         self.__lookup_list = lookup_list
 
@@ -65,7 +36,7 @@ class k_Naive_Bayes():
         result = []
         prediction = (0, -1e99)
 
-        evid_arr = np.zeros((len(self.__lookup_list), ), dtype = bool)
+        evid_arr = np.zeros((len(self.__lookup_list), ), dtype=bool)
         for i in range(len(self.__lookup_list)):
             pair = self.__lookup_list[i]
             evid_arr[i] = evidence[pair[0]] == pair[1]
@@ -77,7 +48,7 @@ class k_Naive_Bayes():
             result_k = self.__data[:, -1] == k
             P = np.log(np.count_nonzero(result_k)/len(self.__data) + alpha)
             filtered_results = self.__data[result_k][:, :-1]
-            count = np.sum(filtered_results, axis = 0) + alpha
+            count = np.sum(filtered_results, axis=0) + alpha
             filtered_count = count[evid_arr]
             P += np.sum(np.log(filtered_count / filtered_results.shape[0]))
 
@@ -88,23 +59,3 @@ class k_Naive_Bayes():
         # Result: list containing results
         # prediction: tuple with [0] being the indication that i-th result is best, and [1] being the log of the probability
         return result, prediction
-
-    # Generates data for results. Last column being the results, other columns being the condition of the i-th symptom
-    # ratio_dict: 2D array of tuples. First dimension: result_i, second dimension: evidence_i
-
-    @staticmethod
-    def GenerateData(ratio_dict, count=250):
-        count = int(count)
-        num_results = len(ratio_dict)
-        num_evidence = len(ratio_dict[0])
-        data = np.zeros((count, num_evidence + 1), dtype=int)
-
-        for i in range(count):
-            result = random.randint(0, num_results - 1)
-            data[i][-1] = result
-            for j in range(len(ratio_dict[result])):
-                t = ratio_dict[result][j]
-                assert type(t) == tuple
-                data[i][j] = gen_data(t)
-
-        return np.array(data)
