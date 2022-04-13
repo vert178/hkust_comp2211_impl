@@ -32,7 +32,7 @@ def KNN():
 
 def Perceptron():
     def secret_function(x, y, z):
-        return 42 * x + y - 69
+        return 24 * x - 32 * y + 100 * z - 2222
     
     data_count = 1000
     test_count = 100
@@ -52,6 +52,7 @@ def Perceptron():
 
     # Average error
     print(accuracy)
+    print(p.w)
 
 #########################################################################################################
 
