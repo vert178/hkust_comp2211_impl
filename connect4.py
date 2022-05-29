@@ -148,11 +148,13 @@ class Connect4:
 
     def solve(self, is_AI_turn: bool):
         self.moves_considered = 0
-        if "ab-pruning" in self.solve_techniques:
+        if "depth" in self.solve_techniques:
+            score, move = self.minimax_abd(is_AI_turn, -1e99, 1e99, 0)
+        elif "ab-pruning" in self.solve_techniques:
             score, move = self.minimax_ab_pruning(is_AI_turn, -1e99, 1e99)
         else:
             score, move = self.minimax(is_AI_turn)
-        return move
+        return score, move
     
     def minimax(self, is_AI_turn: bool):
         # Initiate score variable, and check the state of the game
@@ -212,13 +214,51 @@ class Connect4:
             if is_AI_turn:
                 if child_score > score:
                     score = child_score
-                    move = best_move
+                    best_move = move
                     alpha = score
             else:
                 if child_score < score:
                     score = child_score
-                    move = best_move
+                    move = move
                     beta = score
+            if alpha >= beta:
+                break
+        return score, best_move
+
+
+    def minimax_abd(self, is_AI_turn: bool, alpha: float, beta: float, depth: int):
+        self.moves_considered += 1
+        epsilon = 1e-3
+        # Initialize score and best move variable
+        # Since shorter path moves are more favourable we add a depth * epsilon factor to the game trees
+        # if the player wins then return -1 + depth * epsilon
+        # if the AI wins then return 1 - depth * epsilon
+        # Otherwise the state = 2, then for each valid moves:
+        #   try move
+        #   perform minimax abd on child with +1 depth
+        #   undo move
+        #   If it is AI's turn then maximize score
+        #   If it is human's turn then minimize score
+        #   If alpha >= beta: exit early
+        # return score and best move
+        score, best_move = -1e99 if is_AI_turn else 1e99, -1
+        state = self.check_game()
+        if state == 0: return 0, 0
+        if state == 1: return 1 - depth * epsilon, 0
+        if state == -1: return -1 + depth * epsilon, 0
+        for move in self.available_moves:
+            if not self.make_move(move, is_AI_turn): continue
+            if best_move == -1: best_move = move
+            child_score, child_move = self.minimax_abd(not is_AI_turn, alpha, beta, depth + 1)
+            assert self.undo_move(move, is_AI_turn)
+            if is_AI_turn and child_score > score:
+                score = child_score
+                best_move = move
+                alpha = child_score
+            elif not is_AI_turn and child_score < score:
+                score = child_score
+                best_move = move
+                beta = child_score
             if alpha >= beta:
                 break
         return score, best_move
@@ -241,10 +281,11 @@ class Connect4:
             
             if self.is_AI_turn:
                 t1 = time.time()
-                move = self.solve(True)
+                score, move = self.solve(True)
                 t2 = time.time()
                 t = round(t2 - t1, 5)
-                if self.verbose > 1.5: print("AI makes the move: ", move)
+                if self.verbose > 1.5: 
+                    print("AI makes the move: ", move, " This move has score: ", score)
                 if self.verbose > 0.5:
                     print("Moves considered: ", self.moves_considered)
                     print( "Time taken to solve: ", t, " seconds")
@@ -275,5 +316,5 @@ class Connect4:
             print("Draw. That's cool.")
 
 if __name__ == "__main__":
-    c4 = Connect4(AI_go_first=True, board_size=(6, 7), winning_length=4, solve_techniques = ["ab-pruning"], verbose = 1)
+    c4 = Connect4(AI_go_first=True, board_size=(3, 3), winning_length=3, solve_techniques = ["ab-pruning", "depth"], verbose = 2)
     c4.play()
